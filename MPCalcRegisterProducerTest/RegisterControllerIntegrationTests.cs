@@ -35,7 +35,7 @@ public class RegisterControllerIntegrationTests
     {
         // Arrange
         string message = "Integration test message " + Guid.NewGuid().ToString();
-        string expectedMessage = $"\"{message}\""; 
+        string expectedMessage = $"\"{message}\"";
 
         var factory = new ConnectionFactory
         {
@@ -49,7 +49,12 @@ public class RegisterControllerIntegrationTests
         await using var connection = await factory.CreateConnectionAsync();
         await using var channel = await connection.CreateChannelAsync();
 
-        await channel.QueueDeclareAsync(_queueName, durable: false, exclusive: false, autoDelete: false);
+        await channel.QueueDeclareAsync(_queueName, durable: true, exclusive: false, autoDelete: false, arguments: new Dictionary<string, object>
+        {
+            { "x-dead-letter-exchange", "mpcalc-dlx" },
+            { "x-dead-letter-routing-key", "mpcalc-register-queue-dlq" }
+        });
+
         await channel.QueuePurgeAsync(_queueName);
 
         // Act
@@ -60,7 +65,7 @@ public class RegisterControllerIntegrationTests
 
         // Verifica o número de mensagens na fila
         var queueInfo = await channel.QueueDeclarePassiveAsync(_queueName);
-        uint messageCount = queueInfo.MessageCount;
+        uint messageCount = queueInfo?.MessageCount ?? 0;
         Assert.True(messageCount > 0, $"Nenhuma mensagem encontrada na fila {_queueName}. Contagem: {messageCount}. Esperava pelo menos 1.");
 
         // Recupera a mensagem
