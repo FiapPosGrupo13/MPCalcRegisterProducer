@@ -1,0 +1,18 @@
+# Pastas do Visual Studio
+.vs/
+.vscode/
+
+# Arquivos de build
+bin/
+obj/
+
+# Arquivos de configuração do usuário
+*.user
+*.suo
+
+# Arquivos temporários
+*.tmp
+*.log
+
+# Outros
+applicationhost.config
