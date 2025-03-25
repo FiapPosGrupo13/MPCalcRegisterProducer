@@ -66,20 +66,12 @@ public class RabbitMqService : IRabbitMqService
             exchange: "topic_exchange",
             routingKey: "contract.*.error"); // Usa o nome da DLQ como routing key
 
-        // Argumentos para a fila principal com DLQ configurada
-        var arguments = new Dictionary<string, object>
-        {
-            { "x-dead-letter-exchange", _dlxName },
-            { "x-dead-letter-routing-key", _dlqName }
-        };
-
         // Declara a fila principal com os argumentos de DLQ
         await channel.QueueDeclareAsync(
             queue: _queueName,
             durable: true, // Recomendado para DLQ
             exclusive: false,
-            autoDelete: false,
-            arguments: arguments);
+            autoDelete: false);
         
         await channel.QueueBindAsync(
             queue: _queueName,
