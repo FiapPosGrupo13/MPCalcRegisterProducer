@@ -9,6 +9,8 @@ builder.Services.AddControllers();// Learn more about configuring Swagger/OpenAP
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.WebHost.UseUrls("http://0.0.0.0:5022");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
