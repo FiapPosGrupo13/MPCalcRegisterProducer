@@ -11,7 +11,7 @@ public class RegisterControllerIntegrationTests
 {
     private readonly IRabbitMqService _rabbitMqService;
     private readonly RegisterController _controller;
-    private readonly string _queueName = "mpcalc-register-queue";
+    private readonly string _queueName = "mpcalchub.contact";
 
     public RegisterControllerIntegrationTests()
     {
@@ -51,8 +51,8 @@ public class RegisterControllerIntegrationTests
 
         await channel.QueueDeclareAsync(_queueName, durable: true, exclusive: false, autoDelete: false, arguments: new Dictionary<string, object>
         {
-            { "x-dead-letter-exchange", "mpcalc-dlx" },
-            { "x-dead-letter-routing-key", "mpcalc-register-queue-dlq" }
+            { "x-dead-letter-exchange", "mpcalchub.contact.error" },
+            { "x-dead-letter-routing-key", "mpcalchub.contact.dlx" }
         });
 
         await channel.QueuePurgeAsync(_queueName);

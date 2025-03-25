@@ -18,6 +18,10 @@ WORKDIR /app
 # Copiar os arquivos compilados
 COPY --from=build /out .
 
+# Definir variáveis de ambiente
+ENV ASPNETCORE_ENVIRONMENT=Docker
+ENV ENVIRONMENT=Docker
+
 # Expor a porta do serviço
 EXPOSE 5022
 

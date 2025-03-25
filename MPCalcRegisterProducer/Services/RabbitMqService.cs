@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 public class RabbitMqService : IRabbitMqService
 {
+    private readonly string _routingKey;
     private readonly string _queueName;
     private readonly string _hostName;
     private readonly string _user;
@@ -16,13 +17,14 @@ public class RabbitMqService : IRabbitMqService
 
     public RabbitMqService(IConfiguration configuration)
     {
+        _routingKey = configuration["RabbitMQ:RoutingKey"] ?? "default_route";
         _queueName = configuration["RabbitMQ:QueueName"] ?? "default_queue";
         _hostName = configuration["RabbitMQ:HostName"] ?? "localhost";
         _port = int.Parse(configuration["RabbitMQ:Port"] ?? "5672");
         _user = configuration["RabbitMQ:User"] ?? "guest";
         _password = configuration["RabbitMQ:Password"] ?? "guest";
-        _dlqName = configuration["RabbitMQ:DLQName"] ?? $"{_queueName}-dlq"; // Ex.: mpcalc-register-queue-dlq
-        _dlxName = configuration["RabbitMQ:DLXName"] ?? "mpcalc-dlx"; // Exchange para DLQ
+        _dlqName = configuration["RabbitMQ:DLQName"] ?? $"{_queueName}.error"; // Ex.: mpcalc-register-queue-dlq
+        _dlxName = configuration["RabbitMQ:DLXName"] ?? $"{_queueName}.dlx"; // Exchange para DLQ
     }
 
     protected virtual async Task<IConnection> CreateConnectionAsync()
@@ -45,8 +47,8 @@ public class RabbitMqService : IRabbitMqService
 
         // Declara o Dead Letter Exchange (DLX)
         await channel.ExchangeDeclareAsync(
-            exchange: _dlxName,
-            type: "direct",
+            exchange: "topic_exchange",
+            type: "topic",
             durable: true,
             autoDelete: false);
 
@@ -61,8 +63,8 @@ public class RabbitMqService : IRabbitMqService
         // Vincula a DLQ ao DLX
         await channel.QueueBindAsync(
             queue: _dlqName,
-            exchange: _dlxName,
-            routingKey: _dlqName); // Usa o nome da DLQ como routing key
+            exchange: "topic_exchange",
+            routingKey: "contract.*.error"); // Usa o nome da DLQ como routing key
 
         // Argumentos para a fila principal com DLQ configurada
         var arguments = new Dictionary<string, object>
@@ -78,12 +80,17 @@ public class RabbitMqService : IRabbitMqService
             exclusive: false,
             autoDelete: false,
             arguments: arguments);
+        
+        await channel.QueueBindAsync(
+            queue: _queueName,
+            exchange: "topic_exchange",
+            routingKey: "contact.*");
 
         // Publica a mensagem
         var body = Encoding.UTF8.GetBytes(message);
         await channel.BasicPublishAsync(
-            exchange: "",
-            routingKey: _queueName,
+            exchange: "topic_exchange",
+            routingKey: _routingKey,
             mandatory: false,
             body: body);
     }
